@@ -232,5 +232,3 @@ This document records every technology choice for BizPilot AI, along with the al
 | GraphQL | No API layer in MVP |
 
 ---
-
-*Next document: `07_Architecture.md`*
