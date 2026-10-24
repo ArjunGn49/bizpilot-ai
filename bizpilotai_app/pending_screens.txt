@@ -1,0 +1,1909 @@
+﻿===== lib\features\auth\presentation\screens\login_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bizpilotai/core/router/route_constants.dart';
+import 'package:bizpilotai/core/errors/failure.dart';
+import 'package:bizpilotai/features/auth/presentation/providers/auth_controller.dart';
+import 'package:bizpilotai/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:bizpilotai/features/auth/presentation/widgets/auth_button.dart';
+
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      ref.read(authControllerProvider.notifier).signIn(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    ref.listen<AsyncValue<void>>(authControllerProvider, (_, state) {
+      if (state.hasError) {
+        final error = state.error;
+        final message = error is Failure ? error.message : error.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Card(
+                elevation: 3,
+                shadowColor: colorScheme.shadow.withOpacity(0.12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // App Logo & Branding Header
+                        Center(
+                          child: Container(
+                            height: 56,
+                            width: 56,
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.primary.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.storefront_rounded,
+                              size: 28,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'BizPilot AI',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sign in to manage your business',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Input Fields
+                        AuthTextField(
+                          controller: _emailController,
+                          label: 'Email',
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) =>
+                              v == null || v.trim().isEmpty ? 'Email is required' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        AuthTextField(
+                          controller: _passwordController,
+                          label: 'Password',
+                          obscureText: true,
+                          prefixIcon: const Icon(Icons.lock_outlined),
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _submit(),
+                          validator: (v) =>
+                              v == null || v.isEmpty ? 'Password is required' : null,
+                        ),
+
+                        // Forgot Password Link
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => context.push(RoutePaths.passwordReset),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            child: const Text('Forgot Password?'),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Submit Sign In Button
+                        AuthButton(
+                          onPressed: _submit,
+                          text: 'Sign In',
+                          isLoading: authState.isLoading,
+                          icon: Icons.login_rounded,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Section Divider
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                              child: Text(
+                                'OR',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.outline,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Google Sign-In Button
+                        OutlinedButton.icon(
+                          onPressed: authState.isLoading
+                              ? null
+                              : () {
+                                  ref.read(authControllerProvider.notifier).signInWithGoogle();
+                                },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide(color: colorScheme.outlineVariant),
+                          ),
+                          icon: const Icon(Icons.g_mobiledata_rounded, size: 28, color: Colors.redAccent),
+                          label: Text(
+                            'Continue with Google',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Registration Footer
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account? ",
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => context.push(RoutePaths.signup),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Create Account',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+===== lib\features\auth\presentation\screens\signup_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bizpilotai/core/router/route_constants.dart';
+import 'package:bizpilotai/core/errors/failure.dart';
+import 'package:bizpilotai/features/auth/presentation/providers/auth_controller.dart';
+import 'package:bizpilotai/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:bizpilotai/features/auth/presentation/widgets/auth_button.dart';
+
+class SignupScreen extends ConsumerStatefulWidget {
+  const SignupScreen({super.key});
+
+  @override
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends ConsumerState<SignupScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      ref.read(authControllerProvider.notifier).signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    ref.listen<AsyncValue<void>>(authControllerProvider, (_, state) {
+      if (state.hasError) {
+        final error = state.error;
+        final message = error is Failure ? error.message : error.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sign Up'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: colorScheme.onSurface,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Card(
+                elevation: 3,
+                shadowColor: colorScheme.shadow.withOpacity(0.12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Header Icon & Title
+                        Center(
+                          child: Container(
+                            height: 56,
+                            width: 56,
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.primary.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.person_add_rounded,
+                              size: 28,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Create Account',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Join BizPilot AI & streamline your business',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Form Inputs
+                        AuthTextField(
+                          controller: _emailController,
+                          label: 'Email',
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) =>
+                              v == null || v.trim().isEmpty ? 'Email is required' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        AuthTextField(
+                          controller: _passwordController,
+                          label: 'Password',
+                          obscureText: true,
+                          prefixIcon: const Icon(Icons.lock_outlined),
+                          textInputAction: TextInputAction.next,
+                          validator: (v) =>
+                              v == null || v.isEmpty ? 'Password is required' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        AuthTextField(
+                          controller: _confirmPasswordController,
+                          label: 'Confirm Password',
+                          obscureText: true,
+                          prefixIcon: const Icon(Icons.lock_reset_outlined),
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _submit(),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Please confirm password';
+                            if (v != _passwordController.text) return 'Passwords do not match';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Action Button
+                        AuthButton(
+                          onPressed: _submit,
+                          text: 'Create Account',
+                          isLoading: authState.isLoading,
+                          icon: Icons.person_add_alt_1_rounded,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Section Divider
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                              child: Text(
+                                'OR',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.outline,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Google Sign-In Button
+                        OutlinedButton.icon(
+                          onPressed: authState.isLoading
+                              ? null
+                              : () {
+                                  ref.read(authControllerProvider.notifier).signInWithGoogle();
+                                },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide(color: colorScheme.outlineVariant),
+                          ),
+                          icon: const Icon(Icons.g_mobiledata_rounded, size: 28, color: Colors.redAccent),
+                          label: Text(
+                            'Sign up with Google',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Footer Link
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              'Already have an account? ',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                if (context.canPop()) {
+                                  context.pop();
+                                } else {
+                                  context.go(RoutePaths.login);
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Sign In',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+===== lib\features\dashboard\presentation\screens\dashboard_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:bizpilotai/core/router/route_constants.dart';
+import 'package:bizpilotai/core/sync/sync_service.dart';
+import 'package:bizpilotai/core/widgets/barcode_scanner_dialog.dart';
+import 'package:bizpilotai/features/auth/presentation/providers/auth_controller.dart';
+import 'package:bizpilotai/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:bizpilotai/features/invoices/presentation/providers/invoices_provider.dart';
+import 'package:bizpilotai/features/products/presentation/providers/products_provider.dart';
+
+class DashboardScreen extends ConsumerStatefulWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _isSyncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start periodic background cloud sync
+    Future.microtask(() {
+      ref.read(syncServiceProvider).startPeriodicSync();
+    });
+  }
+
+  Future<void> _manualSync() async {
+    setState(() => _isSyncing = true);
+    await ref.read(syncServiceProvider).syncPendingData();
+    if (mounted) {
+      setState(() => _isSyncing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cloud sync completed!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _scanBarcodeShortcut() async {
+    final barcode = await BarcodeScannerDialog.scan(context);
+    if (barcode != null && barcode.isNotEmpty && mounted) {
+      context.push(RoutePaths.products);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+    final isLoggingOut = ref.watch(authControllerProvider).isLoading;
+    final invoicesAsync = ref.watch(invoicesProvider);
+    final lowStockAsync = ref.watch(lowStockProductsProvider);
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final currencyFormat = NumberFormat.currency(symbol: 'â‚¹');
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('BizPilot AI Dashboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.analytics_outlined),
+            tooltip: 'Sales Analytics & Reports',
+            onPressed: () => context.push(RoutePaths.analytics),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'App & Store Settings',
+            onPressed: () => context.push(RoutePaths.settings),
+          ),
+          IconButton(
+            icon: _isSyncing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.cloud_sync_outlined),
+            tooltip: 'Sync Cloud Data',
+            onPressed: _isSyncing ? null : _manualSync,
+          ),
+          IconButton(
+            icon: isLoggingOut
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.logout),
+            tooltip: 'Sign Out',
+            onPressed: isLoggingOut
+                ? null
+                : () {
+                    ref.read(authControllerProvider.notifier).signOut();
+                  },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // User Greeting
+            authState.when(
+              data: (state) => state.maybeWhen(
+                authenticated: (userId, email) => Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: colorScheme.primaryContainer,
+                      child: Icon(Icons.person, color: colorScheme.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Welcome back,',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        Text(
+                          email ?? 'User',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+              loading: () => const LinearProgressIndicator(),
+              error: (e, _) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 20),
+
+            // Revenue Summary
+            invoicesAsync.when(
+              data: (invoices) {
+                final validInvoices = invoices.where((inv) => !inv.isVoid).toList();
+                final totalRevenue = validInvoices.fold<double>(
+                  0.0,
+                  (sum, inv) => sum + inv.total,
+                );
+                final totalPaid = validInvoices.fold<double>(
+                  0.0,
+                  (sum, inv) => sum + inv.paidAmount,
+                );
+                final totalBalance = validInvoices.fold<double>(
+                  0.0,
+                  (sum, inv) => sum + inv.balanceAmount,
+                );
+
+                return Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Total Sales Revenue',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              Text(
+                                currencyFormat.format(totalRevenue),
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          InkWell(
+                            onTap: () => context.push(RoutePaths.analytics),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.analytics_rounded, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem('Collected', currencyFormat.format(totalPaid), Colors.green),
+                          _buildStatItem('Pending Due', currencyFormat.format(totalBalance), Colors.redAccent),
+                          _buildStatItem('Invoices', validInvoices.length.toString(), Colors.blue),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Text('Error loading revenue stats: $err'),
+            ),
+            const SizedBox(height: 20),
+
+            // Low Stock Alert Banner
+            lowStockAsync.when(
+              data: (lowStockItems) {
+                if (lowStockItems.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: Card(
+                    color: colorScheme.errorContainer.withOpacity(0.6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: ListTile(
+                      leading: Icon(Icons.warning_amber_rounded, color: colorScheme.error),
+                      title: Text(
+                        '${lowStockItems.length} Product(s) Low in Stock!',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.error),
+                      ),
+                      subtitle: Text(
+                        lowStockItems.map((p) => '${p.name} (${p.stockQuantity})').join(', '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push(RoutePaths.products),
+                    ),
+                  ),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+
+            // Quick POS Action Shortcuts
+            Text(
+              'Quick POS Shortcuts',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildShortcutButton(
+                    context,
+                    label: 'Create Invoice',
+                    icon: Icons.point_of_sale_rounded,
+                    color: Colors.indigo,
+                    onTap: () => context.push(RoutePaths.invoicesCreate),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildShortcutButton(
+                    context,
+                    label: 'Scan Barcode',
+                    icon: Icons.qr_code_scanner_rounded,
+                    color: Colors.purple,
+                    onTap: _scanBarcodeShortcut,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildShortcutButton(
+                    context,
+                    label: 'Add Product',
+                    icon: Icons.add_box_rounded,
+                    color: Colors.teal,
+                    onTap: () => context.push(RoutePaths.productsAdd),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildShortcutButton(
+                    context,
+                    label: 'Add Customer',
+                    icon: Icons.person_add_rounded,
+                    color: Colors.orange,
+                    onTap: () => context.push(RoutePaths.customersAdd),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Core Module Navigation Cards
+            Text(
+              'Management Modules',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12.0,
+              crossAxisSpacing: 12.0,
+              children: [
+                _buildDashboardCard(
+                  context,
+                  title: 'Products',
+                  icon: Icons.inventory_2_rounded,
+                  color: Colors.blue,
+                  onTap: () => context.push(RoutePaths.products),
+                ),
+                _buildDashboardCard(
+                  context,
+                  title: 'Customers',
+                  icon: Icons.people_alt_rounded,
+                  color: Colors.green,
+                  onTap: () => context.push(RoutePaths.customers),
+                ),
+                _buildDashboardCard(
+                  context,
+                  title: 'Invoices',
+                  icon: Icons.receipt_long_rounded,
+                  color: Colors.orange,
+                  onTap: () => context.push(RoutePaths.invoices),
+                ),
+                _buildDashboardCard(
+                  context,
+                  title: 'Expenses',
+                  icon: Icons.money_off_rounded,
+                  color: Colors.red,
+                  onTap: () => context.push(RoutePaths.expenses),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShortcutButton(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        backgroundColor: color.withOpacity(0.12),
+        foregroundColor: color,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      icon: Icon(icon, size: 20),
+      label: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+      ),
+    );
+  }
+
+  Widget _buildDashboardCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 40, color: color),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+===== lib\features\settings\presentation\screens\settings_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:bizpilotai/core/theme/theme_provider.dart';
+import 'package:bizpilotai/core/sync/sync_service.dart';
+import 'package:bizpilotai/features/settings/presentation/providers/settings_provider.dart';
+
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _taxLabelController = TextEditingController();
+
+  String _selectedCurrency = 'â‚¹';
+  bool _isSaving = false;
+  bool _isSyncing = false;
+  bool _isInitialized = false;
+
+  static const List<String> _currencies = ['â‚¹', '\$', 'â‚¬', 'Â£', 'A\$', 'R\$'];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _taxLabelController.dispose();
+    super.dispose();
+  }
+
+  void _populateSettings(Map<String, String> settings) {
+    if (_isInitialized) return;
+    _nameController.text = settings['business_name'] ?? 'BizPilot AI Store';
+    _phoneController.text = settings['business_phone'] ?? '+91 98765 43210';
+    _addressController.text = settings['business_address'] ?? '123 Main Market, New Delhi';
+    _taxLabelController.text = settings['tax_label'] ?? 'GST';
+    if (_currencies.contains(settings['currency_symbol'])) {
+      _selectedCurrency = settings['currency_symbol']!;
+    }
+    _isInitialized = true;
+  }
+
+  Future<void> _saveBusinessProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    await ref.read(settingsControllerProvider).saveBusinessDetails(
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+          address: _addressController.text.trim(),
+          taxLabel: _taxLabelController.text.trim(),
+          currencySymbol: _selectedCurrency,
+        );
+
+    if (mounted) {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Store settings saved successfully!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _triggerSync() async {
+    setState(() => _isSyncing = true);
+    await ref.read(syncServiceProvider).syncPendingData();
+    if (mounted) {
+      setState(() => _isSyncing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cloud sync complete!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsAsync = ref.watch(settingsProvider);
+    final currentThemeMode = ref.watch(themeModeProvider);
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('App & Store Settings'),
+      ),
+      body: settingsAsync.when(
+        data: (settingsMap) {
+          _populateSettings(settingsMap);
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Theme & Appearance Section
+                Text(
+                  'Appearance & Theme Mode',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Choose App Theme',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        const SizedBox(height: 12),
+                        SegmentedButton<ThemeMode>(
+                          segments: const [
+                            ButtonSegment(
+                              value: ThemeMode.system,
+                              label: Text('System'),
+                              icon: Icon(Icons.brightness_auto),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.light,
+                              label: Text('Light'),
+                              icon: Icon(Icons.light_mode),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.dark,
+                              label: Text('Dark'),
+                              icon: Icon(Icons.dark_mode),
+                            ),
+                          ],
+                          selected: {currentThemeMode},
+                          onSelectionChanged: (newSelection) {
+                            ref
+                                .read(themeModeProvider.notifier)
+                                .setThemeMode(newSelection.first);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Store Business Profile
+                Text(
+                  'Business & Store Details',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Business Name',
+                              prefixIcon: Icon(Icons.storefront_outlined),
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (v) =>
+                                v == null || v.trim().isEmpty ? 'Business name is required' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _phoneController,
+                            decoration: const InputDecoration(
+                              labelText: 'Business Phone Number',
+                              prefixIcon: Icon(Icons.phone_outlined),
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _addressController,
+                            decoration: const InputDecoration(
+                              labelText: 'Business Address',
+                              prefixIcon: Icon(Icons.location_on_outlined),
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _selectedCurrency,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Currency Symbol',
+                                    prefixIcon: Icon(Icons.currency_exchange),
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: _currencies.map((curr) {
+                                    return DropdownMenuItem(
+                                      value: curr,
+                                      child: Text(curr),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() {
+                                        _selectedCurrency = val;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _taxLabelController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Tax Label (GST/VAT)',
+                                    prefixIcon: Icon(Icons.receipt_outlined),
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _isSaving ? null : _saveBusinessProfile,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: _isSaving
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.save_outlined),
+                              label: const Text('Save Business Profile', style: TextStyle(fontSize: 16)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Cloud Sync & System
+                Text(
+                  'Cloud Sync & System Status',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: CircleAvatar(
+                            backgroundColor: colorScheme.primaryContainer,
+                            child: Icon(Icons.cloud_sync_outlined, color: colorScheme.primary),
+                          ),
+                          title: const Text('Firebase Cloud Sync', style: TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: const Text('Sync offline SQLite data with Firebase Cloud Firestore'),
+                          trailing: ElevatedButton.icon(
+                            onPressed: _isSyncing ? null : _triggerSync,
+                            icon: _isSyncing
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.sync_rounded, size: 18),
+                            label: const Text('Sync Now'),
+                          ),
+                        ),
+                        const Divider(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('App Version', style: TextStyle(color: Colors.grey)),
+                            Text('v1.0.0+1', style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error loading settings: $err')),
+      ),
+    );
+  }
+}
+===== lib\features\products\presentation\screens\product_list_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bizpilotai/core/router/route_constants.dart';
+import 'package:bizpilotai/core/widgets/barcode_scanner_dialog.dart';
+import 'package:bizpilotai/features/products/presentation/providers/products_provider.dart';
+import 'package:bizpilotai/features/products/presentation/widgets/product_card.dart';
+
+class ProductListScreen extends ConsumerStatefulWidget {
+  const ProductListScreen({super.key});
+
+  @override
+  ConsumerState<ProductListScreen> createState() => _ProductListScreenState();
+}
+
+class _ProductListScreenState extends ConsumerState<ProductListScreen> {
+  String _searchQuery = '';
+
+  Future<void> _scanBarcode() async {
+    final scannedCode = await BarcodeScannerDialog.scan(context);
+    if (!mounted) return;
+    if (scannedCode != null && scannedCode.isNotEmpty) {
+      setState(() {
+        _searchQuery = scannedCode;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Scanned barcode: $scannedCode')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final productsAsync = ref.watch(productsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Products Inventory'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Scan Barcode',
+            onPressed: _scanBarcode,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Search & Scan Bar
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search product or scan barcode...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        onPressed: _scanBarcode,
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: productsAsync.when(
+              data: (products) {
+                final filtered = products.where((p) {
+                  if (_searchQuery.isEmpty) return true;
+                  final q = _searchQuery.toLowerCase();
+                  return p.name.toLowerCase().contains(q) ||
+                      p.sku.toLowerCase().contains(q) ||
+                      (p.barcode != null && p.barcode!.toLowerCase().contains(q));
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Text(
+                      _searchQuery.isEmpty
+                          ? 'No products found. Add one!'
+                          : 'No products found matching search.',
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final product = filtered[index];
+                    return ProductCard(
+                      product: product,
+                      onTap: () {
+                        final location = RoutePaths.productDetail.replaceAll(':id', product.id);
+                        context.push(location);
+                      },
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error loading products: $err')),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push(RoutePaths.productsAdd),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+===== lib\features\customers\presentation\screens\customer_list_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bizpilotai/core/router/route_constants.dart';
+import 'package:bizpilotai/features/customers/presentation/providers/customers_provider.dart';
+import 'package:bizpilotai/features/customers/presentation/widgets/customer_card.dart';
+
+class CustomerListScreen extends ConsumerWidget {
+  const CustomerListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final customersAsync = ref.watch(customersProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Customers Directory'),
+      ),
+      body: customersAsync.when(
+        data: (customers) {
+          if (customers.isEmpty) {
+            return const Center(child: Text('No customers found. Add one!'));
+          }
+          return ListView.builder(
+            itemCount: customers.length,
+            itemBuilder: (context, index) {
+              final customer = customers[index];
+              return CustomerCard(
+                customer: customer,
+                onTap: () {
+                  final location = RoutePaths.customerDetail.replaceAll(':id', customer.id);
+                  context.push(location);
+                },
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('Error loading customers: $err')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push(RoutePaths.customersAdd),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+===== lib\features\invoices\presentation\screens\invoice_list_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bizpilotai/core/router/route_constants.dart';
+import 'package:bizpilotai/features/invoices/presentation/providers/invoices_provider.dart';
+import 'package:bizpilotai/features/invoices/presentation/widgets/invoice_card.dart';
+
+class InvoiceListScreen extends ConsumerWidget {
+  const InvoiceListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final invoicesAsync = ref.watch(invoicesProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Invoices'),
+      ),
+      body: invoicesAsync.when(
+        data: (invoices) {
+          if (invoices.isEmpty) {
+            return const Center(child: Text('No invoices found. Create one!'));
+          }
+          return ListView.builder(
+            itemCount: invoices.length,
+            itemBuilder: (context, index) {
+              final invoice = invoices[index];
+              return InvoiceCard(
+                invoice: invoice,
+                onTap: () {
+                  final location = RoutePaths.invoiceDetail.replaceAll(':id', invoice.id);
+                  context.push(location);
+                },
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error loading invoices: $err')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push(RoutePaths.invoicesCreate),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+===== lib\features\expenses\presentation\screens\expense_list_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:bizpilotai/core/router/route_constants.dart';
+import 'package:bizpilotai/features/expenses/domain/entities/expense.dart';
+import 'package:bizpilotai/features/expenses/presentation/providers/expenses_provider.dart';
+import 'package:bizpilotai/features/expenses/presentation/providers/expense_controller.dart';
+import 'package:bizpilotai/features/expenses/presentation/widgets/expense_card.dart';
+
+class ExpenseListScreen extends ConsumerStatefulWidget {
+  const ExpenseListScreen({super.key});
+
+  @override
+  ConsumerState<ExpenseListScreen> createState() => _ExpenseListScreenState();
+}
+
+class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
+  String _selectedFilterCategory = 'All';
+
+  static const List<String> _filterCategories = [
+    'All',
+    'Rent',
+    'Utilities',
+    'Inventory Purchases',
+    'Transport',
+    'Salaries',
+    'Other',
+  ];
+
+  Future<void> _confirmDelete(Expense expense) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Expense'),
+        content: Text('Are you sure you want to delete ${expense.category} expense of â‚¹${expense.amount.toStringAsFixed(2)}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      final success = await ref.read(expenseControllerProvider.notifier).deleteExpense(expense.id);
+      if (mounted && success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Expense deleted'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final expensesAsync = ref.watch(expensesProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final currencyFormat = NumberFormat.currency(symbol: 'â‚¹');
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Expenses Tracker'),
+      ),
+      body: expensesAsync.when(
+        data: (expenses) {
+          final filteredExpenses = expenses.where((exp) {
+            if (_selectedFilterCategory == 'All') return true;
+            return exp.category.toLowerCase() == _selectedFilterCategory.toLowerCase();
+          }).toList();
+
+          final totalExpense = filteredExpenses.fold<double>(
+            0.0,
+            (sum, item) => sum + item.amount,
+          );
+
+          return Column(
+            children: [
+              // Expense Summary Card
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: colorScheme.errorContainer.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colorScheme.error.withOpacity(0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _selectedFilterCategory == 'All'
+                          ? 'Total Business Expenses'
+                          : 'Total $_selectedFilterCategory Expense',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      currencyFormat.format(totalExpense),
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Category Filter Bar
+              SizedBox(
+                height: 40,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _filterCategories.length,
+                  itemBuilder: (context, index) {
+                    final cat = _filterCategories[index];
+                    final isSelected = cat == _selectedFilterCategory;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: FilterChip(
+                        selected: isSelected,
+                        label: Text(cat),
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedFilterCategory = cat;
+                            });
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Expenses List
+              Expanded(
+                child: filteredExpenses.isEmpty
+                    ? Center(
+                        child: Text(
+                          _selectedFilterCategory == 'All'
+                              ? 'No expenses logged yet. Add one!'
+                              : 'No expenses found under $_selectedFilterCategory.',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 80),
+                        itemCount: filteredExpenses.length,
+                        itemBuilder: (context, index) {
+                          final expense = filteredExpenses[index];
+                          return ExpenseCard(
+                            expense: expense,
+                            onDelete: () => _confirmDelete(expense),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error loading expenses: $err')),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push(RoutePaths.expensesAdd),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Expense'),
+      ),
+    );
+  }
+}
+===== lib\features\analytics\presentation\screens\analytics_screen.dart =====
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:bizpilotai/features/invoices/presentation/providers/invoices_provider.dart';
+import 'package:bizpilotai/features/expenses/presentation/providers/expenses_provider.dart';
+
+class AnalyticsScreen extends ConsumerStatefulWidget {
+  const AnalyticsScreen({super.key});
+
+  @override
+  ConsumerState<AnalyticsScreen> createState() => _AnalyticsScreenState();
+}
+
+class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
+  int _selectedTab = 0; // 0: Today, 1: This Week, 2: This Month, 3: All Time
+
+  bool _isWithinRange(DateTime date) {
+    final now = DateTime.now();
+    if (_selectedTab == 0) {
+      // Today
+      return date.year == now.year && date.month == now.month && date.day == now.day;
+    } else if (_selectedTab == 1) {
+      // Last 7 Days
+      final diff = now.difference(date).inDays;
+      return diff >= 0 && diff <= 7;
+    } else if (_selectedTab == 2) {
+      // This Month
+      return date.year == now.year && date.month == now.month;
+    }
+    return true; // All Time
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final invoicesAsync = ref.watch(invoicesProvider);
+    final expensesAsync = ref.watch(expensesProvider);
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final currencyFormat = NumberFormat.currency(symbol: 'â‚¹');
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Analytics & Financial Reports'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Time Horizon Filter Segmented Button
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment(value: 0, label: Text('Today')),
+                  ButtonSegment(value: 1, label: Text('7 Days')),
+                  ButtonSegment(value: 2, label: Text('Month')),
+                  ButtonSegment(value: 3, label: Text('All Time')),
+                ],
+                selected: {_selectedTab},
+                onSelectionChanged: (newVal) {
+                  setState(() {
+                    _selectedTab = newVal.first;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Revenue vs Expenses Net Profit Card
+            invoicesAsync.when(
+              data: (allInvoices) {
+                return expensesAsync.when(
+                  data: (allExpenses) {
+                    final filteredInvoices = allInvoices
+                        .where((inv) => !inv.isVoid && _isWithinRange(inv.createdAt))
+                        .toList();
+
+                    final filteredExpenses = allExpenses
+                        .where((exp) => _isWithinRange(exp.date))
+                        .toList();
+
+                    final grossRevenue = filteredInvoices.fold<double>(
+                      0.0,
+                      (sum, inv) => sum + inv.total,
+                    );
+
+                    final totalExpenses = filteredExpenses.fold<double>(
+                      0.0,
+                      (sum, exp) => sum + exp.amount,
+                    );
+
+                    final netProfit = grossRevenue - totalExpenses;
+                    final profitMarginPct = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0.0;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Net Profit Summary Card
+                        Container(
+                          padding: const EdgeInsets.all(20.0),
+                          decoration: BoxDecoration(
+                            color: netProfit >= 0
+                                ? Colors.green.withOpacity(0.12)
+                                : Colors.red.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: netProfit >= 0
+                                  ? Colors.green.withOpacity(0.3)
+                                  : Colors.red.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Net Profit Margin',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: netProfit >= 0 ? Colors.green : Colors.red,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${profitMarginPct.toStringAsFixed(1)}% Margin',
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                currencyFormat.format(netProfit),
+                                style: theme.textTheme.headlineLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: netProfit >= 0 ? Colors.green : Colors.red,
+                                ),
+                              ),
+                              const Divider(height: 24),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  _buildMetric('Gross Sales', currencyFormat.format(grossRevenue), Colors.blue),
+                                  _buildMetric('Total Expenses', currencyFormat.format(totalExpenses), Colors.orange),
+                                  _buildMetric('Invoices', filteredInvoices.length.toString(), Colors.purple),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Expense Category Breakdown Card
+                        Text(
+                          'Expense Breakdown (${filteredExpenses.length} Logged)',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        if (filteredExpenses.isEmpty)
+                          const Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Center(child: Text('No expenses recorded for selected timeframe.')),
+                            ),
+                          )
+                        else
+                          Card(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                children: [
+                                  for (final entry in _groupExpensesByCategory(filteredExpenses).entries)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                          Text(
+                                            currencyFormat.format(entry.value),
+                                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, _) => Text('Error loading expenses: $err'),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Text('Error loading invoices: $err'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Map<String, double> _groupExpensesByCategory(List dynamicExpenses) {
+    final map = <String, double>{};
+    for (final exp in dynamicExpenses) {
+      map[exp.category] = (map[exp.category] ?? 0.0) + exp.amount;
+    }
+    return map;
+  }
+
+  Widget _buildMetric(String title, String value, Color color) {
+    return Column(
+      children: [
+        Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
+        ),
+      ],
+    );
+  }
+}

@@ -18,3 +18,7 @@
 
 # Logs
 *.log
+
+# Firebase configs
+**/google-services.json
+**/GoogleService-Info.plist

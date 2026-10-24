@@ -1,6 +1,15 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_app/core/constants/app_constants.dart';
 import 'package:flutter_app/core/errors/exceptions.dart';
+
+final dioProvider = Provider<Dio>((ref) {
+  return Dio();
+});
+
+final dioClientProvider = Provider<DioClient>((ref) {
+  return DioClient(ref.watch(dioProvider));
+});
 
 class DioClient {
   final Dio _dio;
