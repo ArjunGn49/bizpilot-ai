@@ -341,6 +341,23 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      InvoicePdfService.printOrShareInvoice(
+                        invoice: invoice,
+                        isThermalReceipt: false,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sharing invoice PDF sheet opened...')),
+                      );
+                    },
+                    icon: const Icon(Icons.share_outlined),
+                    label: const Text('Share Invoice PDF via WhatsApp / Email'),
+                  ),
+                ),
+                const SizedBox(height: 12),
 
                 if (!invoice.isVoid && invoice.balanceAmount > 0) ...[
                   SizedBox(

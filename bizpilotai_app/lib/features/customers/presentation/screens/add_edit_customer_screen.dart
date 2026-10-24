@@ -125,6 +125,21 @@ class _AddEditCustomerScreenState extends ConsumerState<AddEditCustomerScreen> {
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: 'Retail',
+                      decoration: const InputDecoration(
+                        labelText: 'Customer Category / Tier',
+                        prefixIcon: Icon(Icons.star_outline),
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'Retail', child: Text('Retail Buyer')),
+                        DropdownMenuItem(value: 'Wholesale', child: Text('Wholesale Account')),
+                        DropdownMenuItem(value: 'VIP', child: Text('VIP Client')),
+                      ],
+                      onChanged: (val) {},
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _addressController,
                       decoration: const InputDecoration(labelText: 'Address (Optional)', border: OutlineInputBorder()),

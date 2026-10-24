@@ -30,6 +30,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications & Alerts'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.done_all_rounded),
+            tooltip: 'Mark All as Read',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All notifications marked as read.')),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

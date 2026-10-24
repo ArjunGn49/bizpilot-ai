@@ -16,12 +16,16 @@ class SignupScreen extends ConsumerStatefulWidget {
 
 class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  bool _agreeTerms = true;
+
   @override
   void dispose() {
+    _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -29,6 +33,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   void _submit() {
+    if (!_agreeTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please accept the Terms of Service to continue.')),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       ref.read(authControllerProvider.notifier).signUp(
         email: _emailController.text.trim(),
@@ -128,6 +139,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                         // Form Inputs
                         AuthTextField(
+                          controller: _fullNameController,
+                          label: 'Full Name',
+                          prefixIcon: const Icon(Icons.person_outline),
+                          textInputAction: TextInputAction.next,
+                          validator: (v) =>
+                              v == null || v.trim().isEmpty ? 'Full Name is required' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        AuthTextField(
                           controller: _emailController,
                           label: 'Email',
                           prefixIcon: const Icon(Icons.email_outlined),
@@ -160,7 +180,26 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 12),
+
+                        // Terms & Conditions Checkbox
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _agreeTerms,
+                              onChanged: (val) {
+                                if (val != null) setState(() => _agreeTerms = val);
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                'I agree to the Terms of Service & Privacy Policy',
+                                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
 
                         // Action Button
                         AuthButton(

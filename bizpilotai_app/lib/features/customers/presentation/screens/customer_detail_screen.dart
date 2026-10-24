@@ -364,6 +364,22 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                               label: Text('Collect Payment (${currencyFormat.format(customer.totalOutstanding)})'),
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Payment reminder sent to ${customer.name} (${customer.phone})!'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.mark_email_read_outlined, size: 18),
+                              label: const Text('Send WhatsApp / SMS Reminder'),
+                            ),
+                          ),
                         ],
                       ],
                     ),

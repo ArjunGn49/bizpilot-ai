@@ -112,6 +112,39 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 icon: const Icon(Icons.add_photo_alternate_outlined),
                 label: const Text('Attach Promo Banner Image'),
               ),
+              const SizedBox(height: 16),
+
+              // Offer Expiry Date
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now().add(const Duration(days: 7)),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Expiry date set to ${picked.day}/${picked.month}/${picked.year}')),
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: colorScheme.outlineVariant),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.event_outlined),
+                      SizedBox(width: 12),
+                      Text('Set Promo Offer Expiry Date', style: TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 28),
 
               // Publish Button

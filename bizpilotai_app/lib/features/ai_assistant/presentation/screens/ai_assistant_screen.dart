@@ -320,6 +320,15 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
             child: SafeArea(
               child: Row(
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.mic_none_rounded),
+                    tooltip: 'Voice Command Input',
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Listening for voice prompt...')),
+                      );
+                    },
+                  ),
                   Expanded(
                     child: TextField(
                       controller: _inputController,

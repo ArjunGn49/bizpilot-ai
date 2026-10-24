@@ -208,7 +208,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  initialValue: _selectedCurrency,
+                                  value: _selectedCurrency,
                                   decoration: const InputDecoration(
                                     labelText: 'Currency Symbol',
                                     prefixIcon: Icon(Icons.currency_exchange),

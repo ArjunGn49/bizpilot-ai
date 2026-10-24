@@ -18,14 +18,31 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
 
+  int _resendCooldown = 0;
+
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
   }
 
+  void _startCooldown() {
+    setState(() => _resendCooldown = 60);
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      if (_resendCooldown > 0) {
+        setState(() => _resendCooldown--);
+        return true;
+      }
+      return false;
+    });
+  }
+
   void _submit() {
+    if (_resendCooldown > 0) return;
     if (_formKey.currentState!.validate()) {
+      _startCooldown();
       ref.read(authControllerProvider.notifier).sendPasswordResetEmail(
         email: _emailController.text.trim(),
       );
@@ -147,8 +164,8 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
 
                         // Submit Button
                         AuthButton(
-                          onPressed: _submit,
-                          text: 'Send Reset Email',
+                          onPressed: _resendCooldown > 0 ? null : _submit,
+                          text: _resendCooldown > 0 ? 'Resend Email in ${_resendCooldown}s' : 'Send Reset Email',
                           isLoading: authState.isLoading,
                           icon: Icons.mark_email_read_outlined,
                         ),

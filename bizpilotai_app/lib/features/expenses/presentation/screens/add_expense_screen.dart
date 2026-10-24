@@ -186,6 +186,29 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                   ),
                   maxLines: 2,
                 ),
+                const SizedBox(height: 16),
+
+                // Recurring Switch & Receipt Attachment
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Recurring Expense (Monthly)', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: false,
+                  onChanged: (val) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Recurring monthly expense schedule toggled.')),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Receipt photo camera opened.')),
+                    );
+                  },
+                  icon: const Icon(Icons.add_a_photo_outlined),
+                  label: const Text('Attach Receipt Photo'),
+                ),
                 const SizedBox(height: 28),
 
                 // Submit Button

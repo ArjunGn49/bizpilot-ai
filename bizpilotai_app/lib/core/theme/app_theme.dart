@@ -75,7 +75,7 @@ class AppTheme {
         fontFamily: _getFontFamily(),
       ),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       color: _cardSurfaceLight,
       elevation: 0.5,
       margin: EdgeInsets.zero,
@@ -175,7 +175,7 @@ class AppTheme {
       thickness: 1,
       space: 1,
     ),
-    dialogTheme: DialogThemeData(
+    dialogTheme: DialogTheme(
       backgroundColor: _cardSurfaceLight,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -215,7 +215,7 @@ class AppTheme {
         fontFamily: _getFontFamily(),
       ),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       color: _cardSurfaceDark,
       elevation: 0,
       margin: EdgeInsets.zero,
@@ -315,7 +315,7 @@ class AppTheme {
       thickness: 1,
       space: 1,
     ),
-    dialogTheme: DialogThemeData(
+    dialogTheme: DialogTheme(
       backgroundColor: _cardSurfaceDark,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),

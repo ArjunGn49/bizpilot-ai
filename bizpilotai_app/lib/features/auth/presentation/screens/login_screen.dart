@@ -19,6 +19,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  bool _obscurePassword = true;
+  bool _rememberMe = true;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -129,27 +132,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               v == null || v.trim().isEmpty ? 'Email is required' : null,
                         ),
                         const SizedBox(height: 16),
-                        AuthTextField(
+                        TextFormField(
                           controller: _passwordController,
-                          label: 'Password',
-                          obscureText: true,
-                          prefixIcon: const Icon(Icons.lock_outlined),
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock_outlined),
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _submit(),
                           validator: (v) =>
                               v == null || v.isEmpty ? 'Password is required' : null,
                         ),
 
-                        // Forgot Password Link
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () => context.push(RoutePaths.passwordReset),
-                            style: TextButton.styleFrom(
-                              visualDensity: VisualDensity.compact,
+                        const SizedBox(height: 8),
+
+                        // Remember Me & Forgot Password Link Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _rememberMe,
+                                  onChanged: (val) {
+                                    if (val != null) setState(() => _rememberMe = val);
+                                  },
+                                ),
+                                const Text('Remember Me', style: TextStyle(fontSize: 13)),
+                              ],
                             ),
-                            child: const Text('Forgot Password?'),
-                          ),
+                            TextButton(
+                              onPressed: () => context.push(RoutePaths.passwordReset),
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              child: const Text('Forgot Password?'),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
 

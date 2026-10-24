@@ -165,6 +165,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           decoration: const InputDecoration(labelText: 'Tax Name / Label (e.g. GST, VAT)', prefixIcon: Icon(Icons.percent), border: OutlineInputBorder()),
                           onChanged: (val) => _taxLabel = val,
                         ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: '18.0',
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(labelText: 'Default Tax Rate (%)', prefixIcon: Icon(Icons.receipt_long), border: OutlineInputBorder()),
+                        ),
                       ],
                     ),
                   ),

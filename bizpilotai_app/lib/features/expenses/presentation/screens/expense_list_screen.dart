@@ -17,6 +17,7 @@ class ExpenseListScreen extends ConsumerStatefulWidget {
 
 class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
   String _selectedFilterCategory = 'All';
+  String _searchQuery = '';
 
   static const List<String> _filterCategories = [
     'All',
@@ -75,8 +76,16 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
       body: expensesAsync.when(
         data: (expenses) {
           final filteredExpenses = expenses.where((exp) {
-            if (_selectedFilterCategory == 'All') return true;
-            return exp.category.toLowerCase() == _selectedFilterCategory.toLowerCase();
+            // Category Filter
+            if (_selectedFilterCategory != 'All' && exp.category.toLowerCase() != _selectedFilterCategory.toLowerCase()) {
+              return false;
+            }
+            // Search Filter
+            if (_searchQuery.isNotEmpty) {
+              final q = _searchQuery.toLowerCase();
+              return exp.category.toLowerCase().contains(q) || (exp.note != null && exp.note!.toLowerCase().contains(q));
+            }
+            return true;
           }).toList();
 
           final totalExpense = filteredExpenses.fold<double>(
@@ -86,6 +95,22 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
 
           return Column(
             children: [
+              // Search Input Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: TextField(
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                  decoration: InputDecoration(
+                    hintText: 'Search expense note or category...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() => _searchQuery = ''))
+                        : null,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+
               // Expense Summary Card
               Container(
                 width: double.infinity,

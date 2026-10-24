@@ -19,6 +19,20 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _isSyncing = false;
+  int _selectedTimeRange = 3; // 0: Today, 1: 7 Days, 2: Month, 3: All Time
+
+  bool _isWithinDashboardRange(DateTime date) {
+    final now = DateTime.now();
+    if (_selectedTimeRange == 0) {
+      return date.year == now.year && date.month == now.month && date.day == now.day;
+    } else if (_selectedTimeRange == 1) {
+      final diff = now.difference(date).inDays;
+      return diff >= 0 && diff <= 7;
+    } else if (_selectedTimeRange == 2) {
+      return date.year == now.year && date.month == now.month;
+    }
+    return true;
+  }
 
   @override
   void initState() {
@@ -152,7 +166,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             // Revenue Summary
             invoicesAsync.when(
               data: (invoices) {
-                final validInvoices = invoices.where((inv) => !inv.isVoid).toList();
+                final validInvoices = invoices.where((inv) => !inv.isVoid && _isWithinDashboardRange(inv.createdAt)).toList();
                 final totalRevenue = validInvoices.fold<double>(
                   0.0,
                   (sum, inv) => sum + inv.total,

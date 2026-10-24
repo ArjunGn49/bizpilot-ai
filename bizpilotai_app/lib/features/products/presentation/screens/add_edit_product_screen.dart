@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+
 import 'package:bizpilotai/core/errors/failure.dart';
 import 'package:bizpilotai/features/products/domain/entities/product.dart';
 import 'package:bizpilotai/features/products/presentation/providers/categories_provider.dart';
@@ -17,15 +18,17 @@ class AddEditProductScreen extends ConsumerStatefulWidget {
 
 class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late final TextEditingController _nameController;
   late final TextEditingController _skuController;
   late final TextEditingController _barcodeController;
+  late final TextEditingController _serialController;
+  late final TextEditingController _imeiController;
   late final TextEditingController _sellingPriceController;
   late final TextEditingController _costPriceController;
   late final TextEditingController _stockController;
   late final TextEditingController _lowStockController;
-  
+
   String? _selectedCategoryId;
 
   bool get isEditing => widget.product != null;
@@ -36,6 +39,8 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     _nameController = TextEditingController(text: widget.product?.name ?? '');
     _skuController = TextEditingController(text: widget.product?.sku ?? '');
     _barcodeController = TextEditingController(text: widget.product?.barcode ?? '');
+    _serialController = TextEditingController(text: widget.product?.serialNumber ?? '');
+    _imeiController = TextEditingController(text: widget.product?.imei ?? '');
     _sellingPriceController = TextEditingController(text: widget.product?.sellingPrice.toString() ?? '');
     _costPriceController = TextEditingController(text: widget.product?.costPrice.toString() ?? '');
     _stockController = TextEditingController(text: widget.product?.stockQuantity.toString() ?? '0');
@@ -48,6 +53,8 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     _nameController.dispose();
     _skuController.dispose();
     _barcodeController.dispose();
+    _serialController.dispose();
+    _imeiController.dispose();
     _sellingPriceController.dispose();
     _costPriceController.dispose();
     _stockController.dispose();
@@ -63,14 +70,14 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
       }
 
       final now = DateTime.now();
-      
+
       final productToSave = Product(
         id: isEditing ? widget.product!.id : const Uuid().v4(),
         name: _nameController.text.trim(),
         sku: _skuController.text.trim(),
         barcode: _barcodeController.text.trim().isEmpty ? null : _barcodeController.text.trim(),
-        serialNumber: widget.product?.serialNumber, // Editing serial number deferred
-        imei: widget.product?.imei, // Editing imei deferred
+        serialNumber: _serialController.text.trim().isEmpty ? null : _serialController.text.trim(),
+        imei: _imeiController.text.trim().isEmpty ? null : _imeiController.text.trim(),
         categoryId: _selectedCategoryId!,
         sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0.0,
         costPrice: double.tryParse(_costPriceController.text) ?? 0.0,
@@ -117,10 +124,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
           if (isEditing)
             IconButton(
               icon: const Icon(Icons.delete),
-              onPressed: () {
-                // Future improvement: Show confirmation dialog
-                _delete();
-              },
+              onPressed: _delete,
             )
         ],
       ),
@@ -148,18 +152,35 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                     TextFormField(
                       controller: _barcodeController,
                       decoration: const InputDecoration(
-                        labelText: 'Barcode', 
+                        labelText: 'Barcode',
                         border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.qr_code_scanner), // Stub for future mobile_scanner integration
+                        suffixIcon: Icon(Icons.qr_code_scanner),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _serialController,
+                            decoration: const InputDecoration(labelText: 'Serial Number (Optional)', border: OutlineInputBorder()),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _imeiController,
+                            decoration: const InputDecoration(labelText: 'IMEI (Optional)', border: OutlineInputBorder()),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     categoriesAsync.when(
                       data: (categories) {
                         return DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                          // ignore: deprecated_member_use
                           value: _selectedCategoryId,
+                          decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
                           items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
                           onChanged: (val) {
                             setState(() {

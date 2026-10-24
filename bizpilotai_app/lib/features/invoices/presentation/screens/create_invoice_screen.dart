@@ -482,7 +482,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                             customersAsync.when(
                               data: (customers) {
                                 return DropdownButtonFormField<Customer?>(
-                                  initialValue: _selectedCustomer,
+                                  value: _selectedCustomer,
                                   decoration: const InputDecoration(
                                     labelText:
                                         'Select Customer (Default: Walk-in)',
@@ -769,7 +769,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    initialValue: _paymentMethod,
+                                    value: _paymentMethod,
                                     decoration: const InputDecoration(
                                       labelText: 'Payment Method',
                                       prefixIcon: Icon(Icons.payment_outlined),
