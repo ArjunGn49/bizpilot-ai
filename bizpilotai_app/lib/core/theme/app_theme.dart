@@ -20,16 +20,34 @@ class AppTheme {
   static const _textPrimaryDark = Color(0xFFF8FAFC);
   static const _textSecondaryDark = Color(0xFF94A3B8);
 
+  static TextTheme _buildTextTheme(Brightness brightness, Color textColor) {
+    final baseTheme = brightness == Brightness.light
+        ? ThemeData.light().textTheme
+        : ThemeData.dark().textTheme;
+    final coloredTheme = baseTheme.apply(
+      bodyColor: textColor,
+      displayColor: textColor,
+    );
+    try {
+      return GoogleFonts.plusJakartaSansTextTheme(coloredTheme);
+    } catch (_) {
+      return coloredTheme;
+    }
+  }
+
+  static String? _getFontFamily() {
+    try {
+      return GoogleFonts.plusJakartaSans().fontFamily;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-    textTheme: GoogleFonts.plusJakartaSansTextTheme(
-      ThemeData.light().textTheme.apply(
-        bodyColor: _textPrimaryLight,
-        displayColor: _textPrimaryLight,
-      ),
-    ),
+    fontFamily: _getFontFamily(),
+    textTheme: _buildTextTheme(Brightness.light, _textPrimaryLight),
     colorScheme: ColorScheme.light(
       primary: _primaryLight,
       primaryContainer: _primaryContainerLight,
@@ -49,14 +67,15 @@ class AppTheme {
       elevation: 0,
       centerTitle: false,
       scrolledUnderElevation: 0.5,
-      titleTextStyle: GoogleFonts.plusJakartaSans(
+      titleTextStyle: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: Colors.white,
         letterSpacing: -0.2,
+        fontFamily: _getFontFamily(),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: _cardSurfaceLight,
       elevation: 0.5,
       margin: EdgeInsets.zero,
@@ -85,8 +104,14 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFEF4444)),
       ),
-      labelStyle: TextStyle(color: _textSecondaryLight, fontSize: 14, fontFamily: GoogleFonts.plusJakartaSans().fontFamily),
-      hintStyle: TextStyle(color: const Color(0xFF94A3B8), fontSize: 14, fontFamily: GoogleFonts.plusJakartaSans().fontFamily),
+      labelStyle: TextStyle(
+          color: _textSecondaryLight,
+          fontSize: 14,
+          fontFamily: _getFontFamily()),
+      hintStyle: TextStyle(
+          color: const Color(0xFF94A3B8),
+          fontSize: 14,
+          fontFamily: _getFontFamily()),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -98,10 +123,11 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        textStyle: GoogleFonts.plusJakartaSans(
+        textStyle: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.1,
+          fontFamily: _getFontFamily(),
         ),
       ),
     ),
@@ -114,10 +140,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         side: const BorderSide(color: Color(0xFFE2E8F0)),
-        textStyle: GoogleFonts.plusJakartaSans(
+        textStyle: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.1,
+          fontFamily: _getFontFamily(),
         ),
       ),
     ),
@@ -133,7 +160,10 @@ class AppTheme {
       backgroundColor: _primaryContainerLight,
       selectedColor: _primaryLight,
       secondarySelectedColor: _primaryLight,
-      labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, fontFamily: GoogleFonts.plusJakartaSans().fontFamily),
+      labelStyle: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          fontFamily: _getFontFamily()),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -145,7 +175,7 @@ class AppTheme {
       thickness: 1,
       space: 1,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: _cardSurfaceLight,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -156,13 +186,8 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-    textTheme: GoogleFonts.plusJakartaSansTextTheme(
-      ThemeData.dark().textTheme.apply(
-        bodyColor: _textPrimaryDark,
-        displayColor: _textPrimaryDark,
-      ),
-    ),
+    fontFamily: _getFontFamily(),
+    textTheme: _buildTextTheme(Brightness.dark, _textPrimaryDark),
     colorScheme: ColorScheme.dark(
       primary: _primaryDark,
       primaryContainer: _primaryContainerDark,
@@ -182,14 +207,15 @@ class AppTheme {
       elevation: 0,
       centerTitle: false,
       scrolledUnderElevation: 0.5,
-      titleTextStyle: GoogleFonts.plusJakartaSans(
+      titleTextStyle: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: _textPrimaryDark,
         letterSpacing: -0.2,
+        fontFamily: _getFontFamily(),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: _cardSurfaceDark,
       elevation: 0,
       margin: EdgeInsets.zero,
@@ -218,8 +244,14 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFF87171)),
       ),
-      labelStyle: TextStyle(color: _textSecondaryDark, fontSize: 14, fontFamily: GoogleFonts.plusJakartaSans().fontFamily),
-      hintStyle: TextStyle(color: const Color(0xFF64748B), fontSize: 14, fontFamily: GoogleFonts.plusJakartaSans().fontFamily),
+      labelStyle: TextStyle(
+          color: _textSecondaryDark,
+          fontSize: 14,
+          fontFamily: _getFontFamily()),
+      hintStyle: TextStyle(
+          color: const Color(0xFF64748B),
+          fontSize: 14,
+          fontFamily: _getFontFamily()),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -231,10 +263,11 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        textStyle: GoogleFonts.plusJakartaSans(
+        textStyle: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.1,
+          fontFamily: _getFontFamily(),
         ),
       ),
     ),
@@ -247,10 +280,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         side: const BorderSide(color: Color(0xFF334155)),
-        textStyle: GoogleFonts.plusJakartaSans(
+        textStyle: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.1,
+          fontFamily: _getFontFamily(),
         ),
       ),
     ),
@@ -266,7 +300,10 @@ class AppTheme {
       backgroundColor: _primaryContainerDark,
       selectedColor: _primaryDark,
       secondarySelectedColor: _primaryDark,
-      labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, fontFamily: GoogleFonts.plusJakartaSans().fontFamily),
+      labelStyle: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          fontFamily: _getFontFamily()),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -278,7 +315,7 @@ class AppTheme {
       thickness: 1,
       space: 1,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: _cardSurfaceDark,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),

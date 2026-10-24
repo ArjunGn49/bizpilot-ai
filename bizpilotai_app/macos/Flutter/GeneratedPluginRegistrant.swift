@@ -12,6 +12,7 @@ import flutter_secure_storage_darwin
 import mobile_scanner
 import path_provider_foundation
 import printing
+import sqflite_darwin
 import sqlcipher_flutter_libs
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
@@ -22,5 +23,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   MobileScannerPlugin.register(with: registry.registrar(forPlugin: "MobileScannerPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
   PrintingPlugin.register(with: registry.registrar(forPlugin: "PrintingPlugin"))
+  SqflitePlugin.register(with: registry.registrar(forPlugin: "SqflitePlugin"))
   Sqlite3FlutterLibsPlugin.register(with: registry.registrar(forPlugin: "Sqlite3FlutterLibsPlugin"))
 }
