@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:bizpilotai/core/router/route_constants.dart';
 import 'package:bizpilotai/features/auth/presentation/providers/auth_state_provider.dart';
 
+import 'package:bizpilotai/features/splash/presentation/screens/splash_screen.dart';
+import 'package:bizpilotai/features/ai_assistant/presentation/screens/ai_assistant_screen.dart';
 import 'package:bizpilotai/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizpilotai/features/auth/presentation/screens/signup_screen.dart';
 import 'package:bizpilotai/features/auth/presentation/screens/password_reset_screen.dart';
@@ -49,8 +51,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         data: (authState) {
           return authState.when(
             unknown: () => null,
-            unauthenticated: () => isPublicRoute ? null : RoutePaths.login,
-            authenticated: (userId, email) => (isPublicRoute || isAtRoot) ? RoutePaths.dashboard : null,
+            unauthenticated: () => (isPublicRoute || isAtRoot) ? null : RoutePaths.login,
+            authenticated: (userId, email) => isPublicRoute ? RoutePaths.dashboard : null,
           );
         },
       );
@@ -59,7 +61,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.root,
         name: RouteNames.root,
-        builder: (context, state) => const Placeholder(),
+        builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
         path: RoutePaths.login,
@@ -80,6 +82,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.dashboard,
         name: RouteNames.dashboard,
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.aiAssistant,
+        name: RouteNames.aiAssistant,
+        builder: (context, state) => const AiAssistantScreen(),
       ),
       GoRoute(
         path: RoutePaths.products,

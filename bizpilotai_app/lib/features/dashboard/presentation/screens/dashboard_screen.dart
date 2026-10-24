@@ -66,6 +66,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         title: const Text('BizPilot AI Dashboard'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            tooltip: 'BizPilot AI Assistant',
+            onPressed: () => context.push(RoutePaths.aiAssistant),
+          ),
+          IconButton(
             icon: const Icon(Icons.analytics_outlined),
             tooltip: 'Sales Analytics & Reports',
             onPressed: () => context.push(RoutePaths.analytics),
