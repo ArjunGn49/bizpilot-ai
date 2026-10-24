@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:bizpilotai/core/router/route_constants.dart';
 import 'package:bizpilotai/core/widgets/barcode_scanner_dialog.dart';
+import 'package:bizpilotai/features/products/presentation/providers/categories_provider.dart';
 import 'package:bizpilotai/features/products/presentation/providers/products_provider.dart';
 import 'package:bizpilotai/features/products/presentation/widgets/product_card.dart';
 
@@ -15,6 +17,8 @@ class ProductListScreen extends ConsumerStatefulWidget {
 
 class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   String _searchQuery = '';
+  String? _selectedCategoryId;
+  bool _onlyLowStock = false;
 
   Future<void> _scanBarcode() async {
     final scannedCode = await BarcodeScannerDialog.scan(context);
@@ -32,6 +36,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -77,10 +82,81 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               ),
             ),
           ),
+
+          // Category Filter Chips Bar
+          categoriesAsync.when(
+            data: (categories) {
+              return SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: FilterChip(
+                        selected: _selectedCategoryId == null && !_onlyLowStock,
+                        label: const Text('All Products'),
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedCategoryId = null;
+                              _onlyLowStock = false;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: FilterChip(
+                        selected: _onlyLowStock,
+                        avatar: const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.red),
+                        label: const Text('Low Stock Alerts'),
+                        onSelected: (selected) {
+                          setState(() {
+                            _onlyLowStock = selected;
+                            if (selected) _selectedCategoryId = null;
+                          });
+                        },
+                      ),
+                    ),
+                    ...categories.map((cat) {
+                      final isSelected = cat.id == _selectedCategoryId;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: FilterChip(
+                          selected: isSelected,
+                          label: Text(cat.name),
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategoryId = selected ? cat.id : null;
+                              _onlyLowStock = false;
+                            });
+                          },
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              );
+            },
+            loading: () => const SizedBox(height: 40),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 8),
+
           Expanded(
             child: productsAsync.when(
               data: (products) {
                 final filtered = products.where((p) {
+                  // Low Stock Filter
+                  if (_onlyLowStock && p.stockQuantity > p.lowStockThreshold) return false;
+
+                  // Category Filter
+                  if (_selectedCategoryId != null && p.categoryId != _selectedCategoryId) return false;
+
+                  // Search Filter
                   if (_searchQuery.isEmpty) return true;
                   final q = _searchQuery.toLowerCase();
                   return p.name.toLowerCase().contains(q) ||
@@ -91,9 +167,9 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 if (filtered.isEmpty) {
                   return Center(
                     child: Text(
-                      _searchQuery.isEmpty
+                      _searchQuery.isEmpty && _selectedCategoryId == null && !_onlyLowStock
                           ? 'No products found. Add one!'
-                          : 'No products found matching search.',
+                          : 'No products matching selected filters.',
                     ),
                   );
                 }

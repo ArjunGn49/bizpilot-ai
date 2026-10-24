@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
 import 'package:bizpilotai/core/router/route_constants.dart';
 import 'package:bizpilotai/features/products/domain/entities/product.dart';
 import 'package:bizpilotai/features/products/domain/use_cases/delete_product_use_case.dart';
+import 'package:bizpilotai/features/products/domain/use_cases/update_product_use_case.dart';
 import 'package:bizpilotai/features/products/presentation/providers/products_provider.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -57,6 +59,89 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
+  Future<void> _showAdjustStockDialog(Product product) async {
+    final qtyController = TextEditingController(text: '1');
+    bool isAdding = true;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: Text('Adjust Stock (${product.name})'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('+ Restock'),
+                        selected: isAdding,
+                        onSelected: (val) => setModalState(() => isAdding = true),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('- Deduct'),
+                        selected: !isAdding,
+                        onSelected: (val) => setModalState(() => isAdding = false),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: qtyController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Quantity Units',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Save Stock'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      final change = int.tryParse(qtyController.text.trim()) ?? 0;
+      if (change <= 0) return;
+
+      final newQty = isAdding ? product.stockQuantity + change : (product.stockQuantity - change).clamp(0, 999999);
+      final updatedProduct = product.copyWith(stockQuantity: newQty, updatedAt: DateTime.now());
+
+      final res = await ref.read(updateProductUseCaseProvider).call(updatedProduct);
+      if (mounted) {
+        res.when(
+          success: (_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Stock quantity updated to $newQty units!')),
+            );
+          },
+          failure: (f) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(f.message), backgroundColor: Colors.red),
+            );
+          },
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final productAsync = ref.watch(productDetailProvider(widget.productId));
@@ -76,9 +161,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           }
 
           final margin = product.sellingPrice - product.costPrice;
-          final marginPct = product.sellingPrice > 0
-              ? (margin / product.sellingPrice) * 100
-              : 0.0;
+          final marginPct = product.sellingPrice > 0 ? (margin / product.sellingPrice) * 100 : 0.0;
           final isLowStock = product.stockQuantity <= product.lowStockThreshold;
 
           return SingleChildScrollView(
@@ -122,9 +205,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: isLowStock
-                                    ? Colors.red.withOpacity(0.15)
-                                    : Colors.green.withOpacity(0.15),
+                                color: isLowStock ? Colors.red.withOpacity(0.15) : Colors.green.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -178,9 +259,19 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 const SizedBox(height: 20),
 
                 // Stock & Inventory Card
-                Text(
-                  'Inventory & Stock Level',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Inventory & Stock Level',
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => _showAdjustStockDialog(product),
+                      icon: const Icon(Icons.tune, size: 16),
+                      label: const Text('Adjust Stock'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Card(

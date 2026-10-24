@@ -30,6 +30,79 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     return true; // All Time
   }
 
+  Widget _buildFinancialBarChart(double revenue, double expenses, BuildContext context) {
+    final maxVal = (revenue > expenses ? revenue : expenses).clamp(1.0, double.infinity);
+    final revRatio = (revenue / maxVal).clamp(0.08, 1.0);
+    final expRatio = (expenses / maxVal).clamp(0.08, 1.0);
+
+    final currencyFormat = NumberFormat.currency(symbol: '₹');
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sales vs Expense Visualization',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 140,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Revenue Bar
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(currencyFormat.format(revenue), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green)),
+                      const SizedBox(height: 6),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 500),
+                        width: 48,
+                        height: 90 * revRatio,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Revenue', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  // Expense Bar
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(currencyFormat.format(expenses), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange)),
+                      const SizedBox(height: 6),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 500),
+                        width: 48,
+                        height: 90 * expRatio,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Expenses', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final invoicesAsync = ref.watch(invoicesProvider);
@@ -156,6 +229,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 20),
+
+                        // Financial Bar Chart
+                        _buildFinancialBarChart(grossRevenue, totalExpenses, context),
                         const SizedBox(height: 24),
 
                         // Expense Category Breakdown Card

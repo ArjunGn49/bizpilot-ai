@@ -6,6 +6,9 @@ import 'package:bizpilotai/features/auth/presentation/providers/auth_state_provi
 
 import 'package:bizpilotai/features/splash/presentation/screens/splash_screen.dart';
 import 'package:bizpilotai/features/ai_assistant/presentation/screens/ai_assistant_screen.dart';
+import 'package:bizpilotai/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:bizpilotai/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:bizpilotai/features/post/presentation/screens/create_post_screen.dart';
 import 'package:bizpilotai/features/auth/presentation/screens/login_screen.dart';
 import 'package:bizpilotai/features/auth/presentation/screens/signup_screen.dart';
 import 'package:bizpilotai/features/auth/presentation/screens/password_reset_screen.dart';
@@ -87,6 +90,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.aiAssistant,
         name: RouteNames.aiAssistant,
         builder: (context, state) => const AiAssistantScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.onboarding,
+        name: RouteNames.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.notifications,
+        name: RouteNames.notifications,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.post,
+        name: RouteNames.post,
+        builder: (context, state) => const CreatePostScreen(),
       ),
       GoRoute(
         path: RoutePaths.products,

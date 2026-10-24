@@ -17,6 +17,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _taxLabelController = TextEditingController();
+  final _receiptFooterController = TextEditingController(text: 'Thank you for shopping with us!');
 
   String _selectedCurrency = '₹';
   bool _isSaving = false;
@@ -31,6 +32,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _taxLabelController.dispose();
+    _receiptFooterController.dispose();
     super.dispose();
   }
 
@@ -40,6 +42,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _phoneController.text = settings['business_phone'] ?? '+91 98765 43210';
     _addressController.text = settings['business_address'] ?? '123 Main Market, New Delhi';
     _taxLabelController.text = settings['tax_label'] ?? 'GST';
+    if (settings['receipt_footer'] != null) {
+      _receiptFooterController.text = settings['receipt_footer']!;
+    }
     if (_currencies.contains(settings['currency_symbol'])) {
       _selectedCurrency = settings['currency_symbol']!;
     }
@@ -203,7 +208,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  value: _selectedCurrency,
+                                  initialValue: _selectedCurrency,
                                   decoration: const InputDecoration(
                                     labelText: 'Currency Symbol',
                                     prefixIcon: Icon(Icons.currency_exchange),
@@ -236,6 +241,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _receiptFooterController,
+                            decoration: const InputDecoration(
+                              labelText: 'Receipt Footer Message',
+                              prefixIcon: Icon(Icons.notes_outlined),
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Store logo picker opened.')),
+                              );
+                            },
+                            icon: const Icon(Icons.image_outlined),
+                            label: const Text('Upload Store Logo'),
                           ),
                           const SizedBox(height: 24),
                           SizedBox(

@@ -18,6 +18,9 @@ class RoutePaths {
   static const String analytics = '/analytics';
   static const String settings = '/settings';
   static const String aiAssistant = '/ai-assistant';
+  static const String onboarding = '/onboarding';
+  static const String notifications = '/notifications';
+  static const String post = '/post';
 }
 
 class RouteNames {
@@ -40,4 +43,7 @@ class RouteNames {
   static const String analytics = 'analytics';
   static const String settings = 'settings';
   static const String aiAssistant = 'aiAssistant';
+  static const String onboarding = 'onboarding';
+  static const String notifications = 'notifications';
+  static const String post = 'post';
 }
